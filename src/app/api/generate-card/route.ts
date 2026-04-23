@@ -10,6 +10,10 @@ const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY || "", 
 });
 
+const imageClient = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY || "", 
+});
+
 const SYSTEM_PROMPT = `You are the core logic for EgoArena, a brutally honest self-reflection web game.
 Your task is to analyze the user's answers to 10 questions and generate a Character Card. 
 The tone must be sharp, specific, and slightly uncomfortable/unsettlingly accurate, but never generic.
@@ -149,7 +153,7 @@ The mask floats on a pure black void background. Frontal symmetrical view. Ultra
     let avatarUrl = null;
     try {
       // Use DALL-E 3 for high quality masks
-      const imageResponse = await openai.images.generate({
+      const imageResponse = await imageClient.images.generate({
         model: "dall-e-3",
         prompt: maskPrompt,
         n: 1,

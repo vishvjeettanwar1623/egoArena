@@ -2,9 +2,16 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { supabase } from "@/lib/supabase";
 
-const openai = new OpenAI({
+// Separate clients for Text (OpenRouter) and Images (OpenAI)
+const textClient = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
   apiKey: process.env.OPENROUTER_API_KEY || "", 
+});
+
+// For image generation, we use the standard OpenAI endpoint as OpenRouter 
+// does not support the /images/generations endpoint directly via SDK.
+const imageClient = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY || "", 
 });
 
 export async function POST(req: Request) {
@@ -15,7 +22,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing Card ID" }, { status: 400 });
     }
 
-    // Fetch the existing card to get stats
     const { data: card, error: fetchError } = await supabase
       .from("cards")
       .select("*")
@@ -26,7 +32,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 });
     }
 
-    // --- MASK GENERATION LOGIC (DUPLICATED FOR BACKFILL) ---
     const stats = card.stats || {};
     const chaosScore = stats.chaos || 50;
     const calmScore = stats.discipline || 50;
@@ -68,7 +73,7 @@ The mask floats on a pure black void background. Frontal symmetrical view. Ultra
 
     let avatarUrl = null;
     try {
-      const imageResponse = await openai.images.generate({
+      const imageResponse = await imageClient.images.generate({
         model: "dall-e-3",
         prompt: maskPrompt,
         n: 1,
@@ -77,10 +82,13 @@ The mask floats on a pure black void background. Frontal symmetrical view. Ultra
       avatarUrl = imageResponse.data[0].url;
     } catch (imageError: any) {
       console.error("Image generation failed:", imageError);
-      return NextResponse.json({ error: "AI Image API failed: " + (imageError.message || "Unknown error") }, { status: 500 });
+      // Detailed error message from the AI provider
+      const errorMsg = imageError?.error?.message || imageError.message || "Unknown error";
+      return NextResponse.json({ 
+        error: `AI Image API failed: ${errorMsg}. Note: Image generation requires a valid OPENAI_API_KEY.` 
+      }, { status: 500 });
     }
 
-    // Update the card with the new avatar URL
     const { error: updateError } = await supabase
       .from("cards")
       .update({ avatar_url: avatarUrl })

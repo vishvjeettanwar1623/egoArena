@@ -135,21 +135,37 @@ export default function DashboardPage() {
                   </div>
                   <p className="text-[10px] font-mono uppercase tracking-widest text-white/40 mb-4">Mask Not Generated</p>
                   <button
-                    onClick={async () => {
+                    onClick={async (e) => {
+                      const btn = e.currentTarget;
+                      const originalText = btn.innerText;
+                      btn.disabled = true;
+                      btn.innerText = "GENERATING...";
+                      
                       try {
                         const res = await fetch("/api/generate-mask", {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({ cardId: card.id }),
                         });
-                        const data = await res.json();
-                        if (data.avatar_url) window.location.reload();
-                        else alert(data.error || "Failed to generate mask");
-                      } catch (e) {
-                        alert("Network error. Try again.");
+                        
+                        const contentType = res.headers.get("content-type");
+                        if (contentType && contentType.indexOf("application/json") !== -1) {
+                          const data = await res.json();
+                          if (data.avatar_url) window.location.reload();
+                          else alert(data.error || "Failed to generate mask");
+                        } else {
+                          const text = await res.text();
+                          console.error("API Error Response:", text);
+                          alert("The server returned an invalid response. This usually happens if the API route is missing or misconfigured in Vercel.");
+                        }
+                      } catch (err) {
+                        alert("Network error. Please check your connection.");
+                      } finally {
+                        btn.disabled = false;
+                        btn.innerText = originalText;
                       }
                     }}
-                    className="px-4 py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-accent transition-colors"
+                    className="px-4 py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-accent disabled:opacity-50 transition-colors"
                   >
                     Generate Now
                   </button>

@@ -121,9 +121,47 @@ export default function DashboardPage() {
     <div className="wrap min-h-screen !pt-[25vh]">
       <div className="max-w-4xl mx-auto px-6">
         
+        {/* Mask Avatar */}
+        <div className="flex justify-center mb-12">
+          <div className="relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-accent to-accent2 rounded-3xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+            <div className="relative w-40 h-40 md:w-56 md:h-56 bg-black border border-white/10 rounded-3xl overflow-hidden flex items-center justify-center">
+              {card.avatar_url ? (
+                <img src={card.avatar_url} alt="Ceremonial Mask" className="w-full h-full object-cover" />
+              ) : (
+                <div className="flex flex-col items-center justify-center p-6 text-center">
+                  <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-4">
+                    <Zap className="w-6 h-6 text-accent" />
+                  </div>
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-white/40 mb-4">Mask Not Generated</p>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const res = await fetch("/api/generate-mask", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ cardId: card.id }),
+                        });
+                        const data = await res.json();
+                        if (data.avatar_url) window.location.reload();
+                        else alert(data.error || "Failed to generate mask");
+                      } catch (e) {
+                        alert("Network error. Try again.");
+                      }
+                    }}
+                    className="px-4 py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-accent transition-colors"
+                  >
+                    Generate Now
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Minimal Header */}
         <div className="flex flex-col items-center text-center mb-24">
-          <h1 className="text-[clamp(3.5rem,12vw,9rem)] font-sans font-black mb-5 tracking-tighter text-white leading-[0.85] py-2">
+          <h1 className="text-[clamp(3.5rem,12vw,8rem)] font-sans font-black mb-5 tracking-tighter text-white leading-[0.85] py-2">
             {card.name || "Anon"}
           </h1>
           <div className="flex items-center gap-3 text-sm md:text-base font-mono uppercase tracking-widest">

@@ -27,9 +27,17 @@ export default async function CardPage({
       <div className="relative overflow-hidden p-6 max-w-[320px] w-full rounded-2xl bg-gradient-to-br from-[#1a1520] to-[#0f1018] border border-accent3/40 mb-12 shadow-2xl">
         <div className="absolute -top-10 -right-10 w-[120px] h-[120px] bg-[radial-gradient(circle,rgba(123,94,167,0.3),transparent_70%)] pointer-events-none" />
         
-        <div className="font-mono text-[10px] tracking-[0.15em] text-accent3 uppercase mb-1.5 break-words">
-          {card.class} · {card.alignment}
+        <div className="font-mono text-[10px] tracking-[0.15em] text-accent3 uppercase mb-1.5 break-words flex items-center justify-between">
+          <span>{card.class} · {card.alignment}</span>
         </div>
+
+        {/* Mask Image */}
+        {card.avatar_url && (
+          <div className="mb-4 relative rounded-xl overflow-hidden aspect-square border border-white/10 shadow-2xl">
+            <img src={card.avatar_url} alt="Mask" className="w-full h-full object-cover" />
+          </div>
+        )}
+
         <div className="flex items-center gap-2 mb-4">
           <div className="text-[1.4rem] font-bold font-sans">
             {card.name || "Anon"}

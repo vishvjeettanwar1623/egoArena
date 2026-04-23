@@ -39,25 +39,31 @@ export default async function LeaderboardPage() {
                 key={card.id}
                 className="group flex items-center p-5 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/10 transition-all duration-300"
               >
-                <div className={`w-12 h-12 flex items-center justify-center font-mono text-lg font-black mr-4 shrink-0 transition-colors ${rankColor}`}>
+                <div className="w-10 h-10 flex items-center justify-center font-mono text-xs font-black mr-4 shrink-0 transition-colors border-r border-white/5 pr-4 text-white/20">
                   {idx + 1}
+                </div>
+
+                {/* Mask Avatar Placeholder */}
+                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 mr-4 overflow-hidden flex items-center justify-center shrink-0 shadow-inner group-hover:border-accent/30 transition-colors">
+                   {card.avatar_url ? (
+                     <img src={card.avatar_url} alt="Mask" className="w-full h-full object-cover" />
+                   ) : (
+                     <div className="w-full h-full bg-gradient-to-br from-white/10 to-transparent opacity-20" />
+                   )}
                 </div>
                 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-1">
-                    <span className="font-bold text-lg truncate group-hover:text-accent transition-colors">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="font-bold text-base md:text-lg truncate group-hover:text-accent transition-colors">
                       {card.name || "Anon"}
                     </span>
-                    <span className="text-[9px] uppercase font-mono tracking-widest text-white/20 font-bold px-2 py-0.5 border border-white/5 rounded">
-                      {card.class}
-                    </span>
                   </div>
-                  <div className="text-xs text-white/40 truncate italic opacity-60 group-hover:opacity-100 transition-opacity">
-                    {card.fatal_flaw}
+                  <div className="text-[10px] md:text-[11px] uppercase font-mono tracking-[0.15em] text-accent/60 font-black">
+                    {card.alignment}
                   </div>
                 </div>
 
-                <div className="text-right shrink-0 ml-6 pl-6 border-l border-white/5">
+                <div className="text-right shrink-0 ml-4">
                   <div className="flex items-center justify-end gap-1.5 font-mono text-xl font-black text-white">
                     <Zap className="w-3 h-3 text-accent fill-accent" />
                     {card.elo}

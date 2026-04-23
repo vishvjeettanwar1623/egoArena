@@ -152,8 +152,12 @@ export default function ArenaPage() {
           })}
         </div>
 
-        <div className="bg-black/20 border border-white/5 rounded-xl p-4 text-xs text-white/70 italic">
-          "{card.fatal_flaw}"
+        <div className="bg-black/30 border border-white/10 rounded-2xl p-6 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-1 h-full bg-red/40" />
+          <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-red/60 mb-2 font-bold">Fatal Flaw</div>
+          <p className="text-base md:text-lg text-white/90 leading-relaxed italic font-sans">
+            "{card.fatal_flaw}"
+          </p>
         </div>
       </motion.div>
     );

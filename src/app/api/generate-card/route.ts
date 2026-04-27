@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/server";
 
 // Optional: you can test this edge or node. We use node for typical fetch limits.
 export const runtime = "nodejs"; 
@@ -44,6 +45,9 @@ Extract an embarrassing but non-judgmental behavioral pattern for the fatal flaw
 
 export async function POST(req: Request) {
   try {
+    const supabaseServer = createClient();
+    const { data: { user } } = await supabaseServer.auth.getUser();
+    
     const ip = req.headers.get("x-forwarded-for") || "unknown";
     
     // Rate Limiting (Max 3 cards per day per IP)
@@ -107,6 +111,7 @@ export async function POST(req: Request) {
     const { data: dbCard, error: dbError } = await supabase
       .from('cards')
       .insert({
+        user_id: user?.id || null,
         name: name || "Anon",
         class: parsedCard.class || "Unknown",
         alignment: parsedCard.alignment || "Neutral",

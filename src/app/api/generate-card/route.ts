@@ -45,7 +45,7 @@ Extract an embarrassing but non-judgmental behavioral pattern for the fatal flaw
 
 export async function POST(req: Request) {
   try {
-    const supabaseServer = createClient();
+    const supabaseServer = await createClient();
     const { data: { user } } = await supabaseServer.auth.getUser();
     
     const ip = req.headers.get("x-forwarded-for") || "unknown";

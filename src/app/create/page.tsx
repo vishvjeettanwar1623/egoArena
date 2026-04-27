@@ -278,7 +278,13 @@ export default function CreateCardWizard() {
           />
         </div>
         <div className="flex justify-between items-center mt-2 font-mono text-[10px] text-muted tracking-wide uppercase">
-          <span>{currentStep === QUESTIONS.length ? "Final Step" : `Question ${currentStep + 1} of 10`}</span>
+          <span>
+            {currentStep === 0 
+              ? "Initial Step" 
+              : currentStep === QUESTIONS.length 
+                ? "Final Step" 
+                : `Question ${currentStep} of 10`}
+          </span>
         </div>
       </div>
 

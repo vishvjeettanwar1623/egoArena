@@ -26,6 +26,22 @@ const STAT_LABEL: Record<string, string> = {
   resilience: "Resilience",
 };
 
+// Derives a contextual question from the scenario prompt so every match feels unique.
+const getDynamicQuestion = (prompt: string): string => {
+  const p = prompt.toLowerCase();
+  if (p.includes("rebuild") || p.includes("civilization") || p.includes("last")) return "Who survives to lead?";
+  if (p.includes("co-founder") || p.includes("startup") || p.includes("business")) return "Who do you build with?";
+  if (p.includes("airport") || p.includes("stuck") || p.includes("spend it with")) return "Who do you actually want around?";
+  if (p.includes("burning") || p.includes("fire") || p.includes("danger") || p.includes("escape")) return "Who gets you out alive?";
+  if (p.includes("unfair") || p.includes("fight") || p.includes("unjust")) return "Who stands their ground?";
+  if (p.includes("secret") || p.includes("confess") || p.includes("truth")) return "Who do you actually trust?";
+  if (p.includes("decade") || p.includes("start over") || p.includes("lost everything")) return "Who bounces back?";
+  if (p.includes("betray") || p.includes("loyalty")) return "Who stays loyal under pressure?";
+  if (p.includes("crisi") || p.includes("emergency") || p.includes("disaster")) return "Who keeps their head?";
+  if (p.includes("power") || p.includes("control") || p.includes("leader")) return "Who do you follow?";
+  return "Who wins this one?";
+};
+
 export default function ArenaPage() {
   const [matchData, setMatchData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -216,10 +232,12 @@ export default function ArenaPage() {
                 <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mb-8 leading-tight drop-shadow-lg">
                   "{matchData.scenario.prompt}"
                 </h2>
-                <div className="bg-accent/10 border border-accent/20 rounded-full px-6 py-3 inline-block">
-                  <p className="text-accent font-mono text-sm uppercase tracking-widest font-bold">
-                    Who do you trust more?
-                  </p>
+                <div className="flex items-center justify-center">
+                  <div className="bg-accent/10 border border-accent/20 rounded-full px-6 py-3 w-fit mx-auto flex items-center justify-center">
+                    <p className="text-accent font-mono text-sm uppercase tracking-widest font-bold leading-none text-center">
+                      {getDynamicQuestion(matchData.scenario.prompt)}
+                    </p>
+                  </div>
                 </div>
               </div>
 

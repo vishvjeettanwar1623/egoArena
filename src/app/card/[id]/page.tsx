@@ -21,25 +21,18 @@ export default async function CardPage({
   }
 
   return (
-    <div className="wrap relative min-h-screen py-12 flex flex-col items-center">
+    <div className="wrap relative min-h-screen flex flex-col items-center justify-start md:justify-center !pt-28 pb-24 px-4">
       <h1 className="text-3xl font-sans font-bold mb-8">Character Card</h1>
       
-      <div className="relative overflow-hidden p-6 max-w-[320px] w-full rounded-2xl bg-gradient-to-br from-[#1a1520] to-[#0f1018] border border-accent3/40 mb-12 shadow-2xl">
-        <div className="absolute -top-10 -right-10 w-[120px] h-[120px] bg-[radial-gradient(circle,rgba(123,94,167,0.3),transparent_70%)] pointer-events-none" />
+      <div className="relative overflow-hidden p-7 max-w-[420px] w-full rounded-2xl bg-gradient-to-br from-[#1a1520] to-[#0f1018] border border-accent3/40 mb-10 shadow-2xl">
+        <div className="absolute -top-10 -right-10 w-[160px] h-[160px] bg-[radial-gradient(circle,rgba(123,94,167,0.3),transparent_70%)] pointer-events-none" />
         
-        <div className="font-mono text-[10px] tracking-[0.15em] text-accent3 uppercase mb-1.5 break-words flex items-center justify-between">
-          <span>{card.class} · {card.alignment}</span>
+        <div className="font-mono text-[11px] tracking-[0.15em] text-accent3 uppercase mb-2 break-words">
+          {card.class} · {card.alignment}
         </div>
 
-        {/* Mask Image */}
-        {card.avatar_url && (
-          <div className="mb-4 relative rounded-xl overflow-hidden aspect-square border border-white/10 shadow-2xl">
-            <img src={card.avatar_url} alt="Mask" className="w-full h-full object-cover" />
-          </div>
-        )}
-
-        <div className="flex items-center gap-2 mb-4">
-          <div className="text-[1.4rem] font-bold font-sans">
+        <div className="flex items-center gap-2 mb-6">
+          <div className="text-[1.75rem] font-bold font-sans">
             {card.name || "Anon"}
           </div>
           {card.streak >= 3 && (
@@ -54,7 +47,7 @@ export default async function CardPage({
           )}
         </div>
 
-        <div className="flex flex-col gap-3 mb-6">
+        <div className="flex flex-col gap-3.5 mb-7">
           {Object.entries(card.stats).map(([stat, val]: any) => {
             const displayLabel = stat === 'cunning' ? 'intellect' : stat;
             const barColor = 
@@ -65,17 +58,17 @@ export default async function CardPage({
               '#5ea7a0';
 
             return (
-              <div key={stat} className="flex items-center gap-2 text-xs">
-                <span className="w-20 text-muted font-mono capitalize">
+              <div key={stat} className="flex items-center gap-3 text-sm">
+                <span className="w-24 text-muted font-mono capitalize text-xs">
                   {displayLabel}
                 </span>
-                <div className="flex-1 h-1.5 bg-white/10 rounded overflow-hidden">
+                <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
                   <div
-                    className="h-full rounded transition-all duration-1000"
+                    className="h-full rounded-full transition-all duration-1000"
                     style={{ width: `${val}%`, backgroundColor: barColor }}
                   />
                 </div>
-                <span className="font-mono text-[11px] text-accent min-w-[24px] text-right">
+                <span className="font-mono text-xs text-accent min-w-[28px] text-right font-bold">
                   {val}
                 </span>
               </div>
@@ -83,8 +76,8 @@ export default async function CardPage({
           })}
         </div>
 
-        <div className="bg-accent2/10 border border-accent2/25 rounded-lg p-3 text-xs text-accent2">
-          <span className="font-mono text-[10px] block mb-1 opacity-70 tracking-[0.1em] uppercase">
+        <div className="bg-accent2/10 border border-accent2/25 rounded-lg p-4 text-sm text-accent2">
+          <span className="font-mono text-[10px] block mb-1.5 opacity-70 tracking-[0.1em] uppercase">
             Fatal Flaw
           </span>
           <span className="leading-relaxed">
@@ -92,29 +85,29 @@ export default async function CardPage({
           </span>
         </div>
 
-        <div className="flex gap-4 mt-6 pt-4 border-t border-white/10 text-center justify-around font-mono text-[11px]">
+        <div className="flex gap-4 mt-6 pt-5 border-t border-white/10 text-center justify-around font-mono text-xs">
           <div>
-            <span className="block text-lg font-bold text-green mb-0.5">{card.wins || 0}</span>
-            <span className="text-muted">Wins</span>
+            <span className="block text-xl font-bold text-green mb-0.5">{card.wins || 0}</span>
+            <span className="text-muted uppercase tracking-widest text-[10px]">Wins</span>
           </div>
           <div>
-            <span className="block text-lg font-bold text-red mb-0.5">{card.losses || 0}</span>
-            <span className="text-muted">Losses</span>
+            <span className="block text-xl font-bold text-red mb-0.5">{card.losses || 0}</span>
+            <span className="text-muted uppercase tracking-widest text-[10px]">Losses</span>
           </div>
           <div>
-            <span className="block text-lg font-bold text-accent mb-0.5">{card.elo || 1200}</span>
-            <span className="text-muted">ELO</span>
+            <span className="block text-xl font-bold text-accent mb-0.5">{card.elo || 1200}</span>
+            <span className="text-muted uppercase tracking-widest text-[10px]">ELO</span>
           </div>
         </div>
       </div>
 
-      <div className="flex gap-4">
-        <button className="px-6 py-3 bg-surface2 border border-border-strong rounded-sm text-sm font-sans hover:bg-white/5 transition-colors">
+      <div className="flex gap-4 w-full max-w-[420px]">
+        <button className="flex-1 px-6 py-4 bg-surface2 border border-border-strong rounded-xl text-sm font-sans font-semibold hover:bg-white/5 transition-colors">
           Share Card
         </button>
         <Link
           href="/arena"
-          className="px-6 py-3 bg-accent text-bg border border-accent font-bold rounded-sm text-sm font-sans hover:bg-accent/90 transition-colors"
+          className="flex-1 px-6 py-4 bg-accent text-bg border border-accent font-bold rounded-xl text-sm font-sans text-center hover:bg-accent/90 transition-colors"
         >
           Enter the Arena
         </Link>

@@ -42,15 +42,6 @@ export default async function LeaderboardPage() {
                 <div className="w-10 h-10 flex items-center justify-center font-mono text-xs font-black mr-4 shrink-0 transition-colors border-r border-white/5 pr-4 text-white/20">
                   {idx + 1}
                 </div>
-
-                {/* Mask Avatar Placeholder */}
-                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 mr-4 overflow-hidden flex items-center justify-center shrink-0 shadow-inner group-hover:border-accent/30 transition-colors">
-                   {card.avatar_url ? (
-                     <img src={card.avatar_url} alt="Mask" className="w-full h-full object-cover" />
-                   ) : (
-                     <div className="w-full h-full bg-gradient-to-br from-white/10 to-transparent opacity-20" />
-                   )}
-                </div>
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">

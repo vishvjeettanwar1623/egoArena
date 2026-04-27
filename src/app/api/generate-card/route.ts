@@ -10,10 +10,6 @@ const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY || "", 
 });
 
-const imageClient = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY || "", 
-});
-
 const SYSTEM_PROMPT = `You are the core logic for EgoArena, a brutally honest self-reflection web game.
 Your task is to analyze the user's answers to 10 questions and generate a Character Card. 
 The tone must be sharp, specific, and slightly uncomfortable/unsettlingly accurate, but never generic.
@@ -107,64 +103,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: parsedCard.taunt || "If you are this much free then kindly close the application and go back." }, { status: 400 });
     }
 
-    // --- MASK GENERATION LOGIC ---
-    const stats = parsedCard.stats || {};
-    const chaosScore = stats.chaos || 50;
-    const calmScore = stats.discipline || 50;
-    const powerScore = ((stats.intellect || 50) + (stats.resilience || 50)) / 2;
-
-    // Find dominant trait from the 5 stats
-    const traitEntries = Object.entries(stats);
-    const dominantStat = traitEntries.reduce((a, b) => (a[1] as number) > (b[1] as number) ? a : b)[0];
-    
-    // Map to user's desired labels
-    const traitMap: Record<string, string> = {
-      chaos: "Chaotic",
-      discipline: "Disciplined",
-      empathy: "Serene",
-      resilience: "Aggressive",
-      intellect: "Mysterious"
-    };
-    const dominantTrait = traitMap[dominantStat] || "Mysterious";
-
-    // Build the fantasy mask prompt
-    const maskPrompt = `Generate a ceremonial fantasy mask as a profile avatar for ${name || 'Anon'}.
-Dominant trait: ${dominantTrait}
-Chaos score: ${chaosScore} out of 100
-Calm score: ${calmScore} out of 100
-Power score: ${powerScore} out of 100
-
-Design rules:
-${chaosScore >= 70 ? "- High chaos: jagged cracks, asymmetry, molten dripping edges, fractured surface, violent sharp angles" : ""}
-${calmScore >= 70 ? "- High calm: smooth porcelain or jade surface, floral or wave motifs, soft symmetrical geometry, clean finish" : ""}
-${powerScore >= 70 ? "- High power: heavy ornate crown elements, gold embossing, dark obsidian or black iron base" : ""}
-- Mixed scores: blend the above proportionally
-
-Eye glow color: ${
-      dominantTrait === "Chaotic" ? "blood red" :
-      dominantTrait === "Serene" ? "soft white" :
-      dominantTrait === "Aggressive" ? "deep red" :
-      dominantTrait === "Disciplined" ? "gold" :
-      dominantTrait === "Mysterious" ? "violet" : "warm amber"
-    }
-
-The mask floats on a pure black void background. Frontal symmetrical view. Ultra-detailed 3D render. Square format 1:1. No human face. Only the mask. Photorealistic studio lighting from above.`;
-
-    let avatarUrl = null;
-    try {
-      // Use DALL-E 3 for high quality masks
-      const imageResponse = await imageClient.images.generate({
-        model: "dall-e-3",
-        prompt: maskPrompt,
-        n: 1,
-        size: "1024x1024",
-      });
-      avatarUrl = imageResponse.data[0].url;
-    } catch (imageError) {
-      console.error("Image generation failed:", imageError);
-      // Fallback: No avatar URL if API fails, but don't crash the whole flow
-    }
-
     // Insert to Supabase DB
     const { data: dbCard, error: dbError } = await supabase
       .from('cards')
@@ -172,11 +110,10 @@ The mask floats on a pure black void background. Frontal symmetrical view. Ultra
         name: name || "Anon",
         class: parsedCard.class || "Unknown",
         alignment: parsedCard.alignment || "Neutral",
-        stats: stats,
-        answers: answers || {},
+        stats: parsedCard.stats || {},
+        answers: answers || {}, // Store raw answers for re-assessment
         fatal_flaw: parsedCard.fatal_flaw || "No flaw detected.",
         ip_address: ip !== "unknown" ? ip : null,
-        avatar_url: avatarUrl
       })
       .select()
       .single();

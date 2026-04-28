@@ -50,11 +50,23 @@ export async function GET(req: Request) {
     let isPlacement = true;
 
     if (userCardId) {
-       const { data: userCard } = await supabase.from('cards').select('elo, wins, losses').eq('id', userCardId).single();
+       const { data: userCard } = await supabase.from('cards').select('elo, wins, losses, battles_today, last_battle_date').eq('id', userCardId).single();
        if (userCard) {
          baseElo = userCard.elo;
          if (userCard.wins + userCard.losses >= 5) {
             isPlacement = false;
+         }
+
+         // Check daily limits
+         const todayDate = new Date().toISOString().split('T')[0];
+         let battlesToday = userCard.battles_today || 0;
+         
+         if (userCard.last_battle_date !== todayDate) {
+           battlesToday = 0;
+         }
+
+         if (battlesToday >= 3) {
+           return NextResponse.json({ dailyLimitReached: true }, { status: 200 });
          }
        }
     }

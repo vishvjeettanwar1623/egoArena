@@ -68,6 +68,7 @@ Return ONLY JSON.`;
         fatal_flaw: parsed.fatal_flaw,
         answers: { ...oldCard.answers, ...answers }, // Merge answers
         version: (oldCard.version || 1) + 1,
+        last_evolved_at: new Date().toISOString()
       })
       .eq("id", cardId)
       .select()

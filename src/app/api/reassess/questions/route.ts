@@ -29,6 +29,25 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 });
     }
 
+    // Check 1-week cooldown in DB
+    if (card.last_evolved_at) {
+      const lastEvolved = new Date(card.last_evolved_at);
+      const now = new Date();
+      const diffTime = now.getTime() - lastEvolved.getTime();
+      const diffDays = diffTime / (1000 * 60 * 60 * 24);
+      
+      if (diffDays < 7) {
+        return NextResponse.json({ 
+          cooldown: true, 
+          daysLeft: Math.ceil(7 - diffDays) 
+        });
+      }
+    }
+
+    if (cardError || !card) {
+      return NextResponse.json({ error: "Card not found" }, { status: 404 });
+    }
+
     // 2. Generate questions via AI
     const SYSTEM_PROMPT = `You are the EgoArena Re-assessment logic. 
 A user is returning for a psychological re-evaluation of their character card.
@@ -37,10 +56,10 @@ Stats: ${JSON.stringify(card.stats)}
 Fatal Flaw: "${card.fatal_flaw}"
 Previous Answers: ${JSON.stringify(card.answers)}
 
-Based on this history, generate 10 BESPOKE, PROVOCATIVE, and DEEPLY PERSONAL follow-up questions.
-Do NOT ask generic questions. Ask things that challenge their previous answers or probe their "shadow" side.
-For example, if they said they value discipline, ask them about the one time their discipline failed and they loved it.
-Make the tone sharp, clinical, but insightful.
+Based on this history, generate 10 deeply personal follow-up questions.
+IMPORTANT: Use extremely simple, everyday language. Do not use complex vocabulary, philosophical jargon, or "typical AI" speech. Talk to them like a blunt, honest friend.
+Do not ask generic questions. Probe directly into their specific past answers to challenge them.
+For example, if they said they value discipline, ask them about a time they lost control and secretly enjoyed it.
 
 Return a strict JSON object with this schema:
 {
@@ -53,7 +72,7 @@ Return a strict JSON object with this schema:
     }
   ]
 }
-Return ONLY JSON.`;
+Return ONLY valid JSON. Ensure all double quotes inside string values are properly escaped (e.g., \\"word\\").`;
 
     const response = await openai.chat.completions.create({
       model: process.env.OPENROUTER_MODEL || "openrouter/auto",
@@ -65,7 +84,16 @@ Return ONLY JSON.`;
     const content = response.choices[0].message.content;
     if (!content) throw new Error("No content generated");
 
-    const parsed = JSON.parse(content);
+    let parsed;
+    try {
+      // Strip markdown code blocks if the model mistakenly included them
+      const cleanedContent = content.replace(/```json/gi, '').replace(/```/g, '').trim();
+      parsed = JSON.parse(cleanedContent);
+    } catch (parseError) {
+      console.error("JSON Parsing failed. Raw AI Output:", content);
+      throw new Error("AI generated invalid JSON. Check server logs for the raw output.");
+    }
+    
     return NextResponse.json(parsed);
 
   } catch (error: any) {

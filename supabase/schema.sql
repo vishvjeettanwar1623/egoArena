@@ -17,6 +17,9 @@ CREATE TABLE IF NOT EXISTS public.cards (
     streak INTEGER DEFAULT 0,
     version INTEGER DEFAULT 1, -- Track how many times a card has been re-assessed
     ip_address TEXT,
+    last_evolved_at TIMESTAMP WITH TIME ZONE,
+    battles_today INTEGER DEFAULT 0,
+    last_battle_date DATE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

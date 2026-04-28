@@ -11,7 +11,7 @@ function calculateElo(ratingA: number, ratingB: number, actualScoreA: number) {
 
 export async function POST(req: Request) {
   try {
-    const { winnerId, loserId, scenarioId, roast } = await req.json();
+    const { winnerId, loserId, scenarioId, roast, voterCardId } = await req.json();
 
     if (!winnerId || !loserId) {
       return NextResponse.json({ error: "Missing ids" }, { status: 400 });
@@ -59,6 +59,23 @@ export async function POST(req: Request) {
       votes_b: 0,
       status: 'closed'
     });
+
+    // Update voter's daily limit if they are authenticated via card
+    if (voterCardId) {
+      const todayDate = new Date().toISOString().split('T')[0];
+      const { data: voterData } = await supabase.from('cards').select('battles_today, last_battle_date').eq('id', voterCardId).single();
+      
+      if (voterData) {
+        let battlesToday = voterData.battles_today || 0;
+        if (voterData.last_battle_date !== todayDate) {
+          battlesToday = 0;
+        }
+        await supabase.from('cards').update({
+          battles_today: battlesToday + 1,
+          last_battle_date: todayDate
+        }).eq('id', voterCardId);
+      }
+    }
 
     return NextResponse.json({ success: true, newWinnerElo, newLoserElo });
   } catch (err: any) {

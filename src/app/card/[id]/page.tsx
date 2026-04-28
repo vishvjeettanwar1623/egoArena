@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import ShareButton from "@/components/ShareButton";
 
 export default async function CardPage({
   params,
@@ -24,7 +25,7 @@ export default async function CardPage({
     <div className="wrap relative min-h-screen flex flex-col items-center justify-start md:justify-center !pt-28 pb-24 px-4">
       <h1 className="text-3xl font-sans font-bold mb-8">Character Card</h1>
       
-      <div className="relative overflow-hidden p-7 max-w-[420px] w-full rounded-2xl bg-gradient-to-br from-[#1a1520] to-[#0f1018] border border-accent3/40 mb-10 shadow-2xl">
+      <div id="ego-card-element" className="relative overflow-hidden p-7 max-w-[420px] w-full rounded-2xl bg-gradient-to-br from-[#1a1520] to-[#0f1018] border border-accent3/40 mb-10 shadow-2xl">
         <div className="absolute -top-10 -right-10 w-[160px] h-[160px] bg-[radial-gradient(circle,rgba(123,94,167,0.3),transparent_70%)] pointer-events-none" />
         
         <div className="font-mono text-[11px] tracking-[0.15em] text-accent3 uppercase mb-2 break-words">
@@ -102,9 +103,7 @@ export default async function CardPage({
       </div>
 
       <div className="flex gap-4 w-full max-w-[420px]">
-        <button className="flex-1 px-6 py-4 bg-surface2 border border-border-strong rounded-xl text-sm font-sans font-semibold hover:bg-white/5 transition-colors">
-          Share Card
-        </button>
+        <ShareButton cardId={card.id} cardName={card.name || "Anon"} cardClass={card.class} cardAlignment={card.alignment} />
         <Link
           href="/arena"
           className="flex-1 px-6 py-4 bg-accent text-bg border border-accent font-bold rounded-xl text-sm font-sans text-center hover:bg-accent/90 transition-colors"

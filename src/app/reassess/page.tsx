@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ArrowRight, ArrowLeft, Loader2, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -16,8 +16,13 @@ export default function ReassessPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cardId, setCardId] = useState<string | null>(null);
   const [evolutionNote, setEvolutionNote] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState<{ active: boolean, daysLeft: number }>({ active: false, daysLeft: 0 });
+  const hasFetched = useRef(false);
 
   useEffect(() => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+
     const init = async () => {
       const id = localStorage.getItem("egoarena_card_id");
       if (!id) {
@@ -26,9 +31,17 @@ export default function ReassessPage() {
       }
       setCardId(id);
 
+      // Check 1-week cooldown in DB via API
       try {
         const res = await fetch(`/api/reassess/questions?cardId=${id}`);
         const data = await res.json();
+        
+        if (data.cooldown) {
+          setCooldown({ active: true, daysLeft: data.daysLeft });
+          setLoading(false);
+          return;
+        }
+
         if (data.questions) {
           setQuestions(data.questions);
         }
@@ -90,6 +103,33 @@ export default function ReassessPage() {
             <Zap className="w-6 h-6 text-accent" />
           </div>
           <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-white/40">Synchronizing Psyche...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (cooldown.active) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black px-6 text-center">
+        <div className="flex flex-col items-center gap-6 max-w-md">
+          <div className="w-16 h-16 bg-white/5 border border-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Loader2 className="w-6 h-6 text-white/40" />
+          </div>
+          <h2 className="text-3xl font-bold mb-2">Evolution in Progress</h2>
+          <p className="text-white/50 font-mono text-xs leading-relaxed mb-8">
+            You can only undergo a deep psychological re-assessment once per week. Give yourself time to change.
+          </p>
+          <div className="bg-white/5 border border-white/10 px-8 py-4 rounded-full">
+            <p className="font-mono text-sm tracking-widest uppercase text-accent font-bold">
+              {cooldown.daysLeft} Day{cooldown.daysLeft > 1 ? 's' : ''} Remaining
+            </p>
+          </div>
+          <button 
+            onClick={() => router.push('/me')}
+            className="mt-8 text-white/40 hover:text-white transition-colors font-mono text-[10px] uppercase tracking-widest"
+          >
+            Return to Dashboard
+          </button>
         </div>
       </div>
     );

@@ -54,7 +54,21 @@ export default function DashboardPage() {
           .order("created_at", { ascending: false })
           .limit(10);
 
-        if (battlesData) setBattles(battlesData);
+        if (battlesData) {
+          const opponentIds = battlesData.map(b => b.card_a === userCard.id ? b.card_b : b.card_a).filter(Boolean);
+          if (opponentIds.length > 0) {
+            const { data: opponents } = await supabase.from("cards").select("id, name").in("id", opponentIds);
+            const opponentMap = new Map(opponents?.map(o => [o.id, o.name]) || []);
+            
+            const enrichedBattles = battlesData.map(b => {
+              const opponentId = b.card_a === userCard.id ? b.card_b : b.card_a;
+              return { ...b, opponentName: opponentMap.get(opponentId) || "Anon" };
+            });
+            setBattles(enrichedBattles);
+          } else {
+            setBattles(battlesData);
+          }
+        }
       } catch (e: any) {
         console.error(e);
         setError(e.message || "Failed to load dashboard.");
@@ -215,24 +229,17 @@ export default function DashboardPage() {
                 const statusColor = !isFinished ? "text-accent" : isWin ? "text-green" : isDraw ? "text-white/40" : "text-red";
                 const statusText = !isFinished ? "ACTIVE" : isWin ? "VICTORY" : isDraw ? "DRAW" : "DEFEAT";
                 
-                const scenarioPrompt = battle.scenario ? 
-                  (Array.isArray(battle.scenario) ? battle.scenario[0]?.prompt : (battle.scenario as any).prompt) 
-                  : "Unknown Scenario";
+                const matchTitle = `${card.name || "Anon"} vs ${battle.opponentName || "Anon"}`;
 
                 return (
                   <div key={battle.id} className="group py-4 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-white/[0.02] transition-all px-4 -mx-4 rounded-xl">
                     <div className="flex-1 min-w-0">
-                      <p className="font-sans text-sm text-white/80 leading-relaxed italic opacity-80 group-hover:opacity-100 transition-opacity">
-                        {scenarioPrompt}
-                      </p>
+                      <h4 className="font-sans font-bold text-base text-white group-hover:text-accent transition-colors">
+                        {matchTitle}
+                      </h4>
                     </div>
                     
                     <div className="shrink-0 flex items-center gap-6">
-                      {isFinished && (
-                        <div className="text-[10px] text-white/30 font-mono tracking-widest font-bold bg-white/5 px-2 py-1 rounded">
-                          {battle.card_a === card.id ? battle.votes_a : battle.votes_b} - {battle.card_a === card.id ? battle.votes_b : battle.votes_a}
-                        </div>
-                      )}
                       <div className={`font-mono text-[10px] uppercase tracking-[0.2em] font-black w-24 text-right ${statusColor}`}>
                         {statusText}
                       </div>

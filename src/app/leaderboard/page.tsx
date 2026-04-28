@@ -34,8 +34,7 @@ export default async function LeaderboardPage() {
             const rankColor = idx === 0 ? "text-accent" : idx === 1 ? "text-white/80" : idx === 2 ? "text-orange-400" : "text-white/20";
             
             return (
-              <Link
-                href={`/card/${card.id}`}
+              <div
                 key={card.id}
                 className="group flex items-center p-5 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/10 transition-all duration-300"
               >
@@ -63,7 +62,7 @@ export default async function LeaderboardPage() {
                     Rating
                   </div>
                 </div>
-              </Link>
+              </div>
             );
           })}
           

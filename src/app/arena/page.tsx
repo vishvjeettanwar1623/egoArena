@@ -48,6 +48,7 @@ export default function ArenaPage() {
   const [error, setError] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
   const [votingFor, setVotingFor] = useState<string | null>(null);
+  const [dailyLimitReached, setDailyLimitReached] = useState(false);
   
   // Traits to display on buttons
   const [traitA, setTraitA] = useState("");
@@ -88,6 +89,13 @@ export default function ArenaPage() {
       
       const res = await fetch(url);
       const data = await res.json();
+
+      if (data.dailyLimitReached) {
+         setDailyLimitReached(true);
+         setLoading(false);
+         return;
+      }
+
       if (res.ok && data.cards && data.cards.length === 2) {
         setMatchData(data);
         
@@ -121,26 +129,42 @@ export default function ArenaPage() {
     
     setVotingFor(winnerId);
     setHasVoted(true);
-    
+
     try {
+      const voterCardId = getStorageItem("egoarena_card_id");
       await fetch("/api/arena/vote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ winnerId, loserId }),
+        body: JSON.stringify({ winnerId, loserId, voterCardId, scenarioId: matchData?.scenario?.id }),
       });
     } catch (e) {
       console.error(e);
     }
   };
 
-  const renderCard = (card: any, isRevealed: boolean) => {
+  const renderCard = (card: any) => {
+    const isSelected = hasVoted && votingFor === card.id;
+    const isRejected = hasVoted && votingFor !== card.id;
+
     return (
       <motion.div 
         layout
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`flex-1 bg-white/5 border border-white/10 rounded-3xl p-8 transition-all duration-500 ${isRevealed ? 'scale-100' : 'blur-md opacity-40 scale-95 pointer-events-none'}`}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="flex-1 relative bg-white/5 border border-white/10 rounded-3xl p-8"
       >
+        {isSelected && (
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-bg px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest z-10 shadow-[0_0_15px_rgba(94,167,160,0.5)]">
+            Your Choice
+          </div>
+        )}
+        {isRejected && (
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#1a1520] border border-white/10 text-white/40 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest z-10">
+            Rejected
+          </div>
+        )}
+
         <div className="mb-6">
           <h3 className="text-2xl font-bold mb-1">{card.name}</h3>
           <p className="font-mono text-[10px] text-accent uppercase tracking-widest">{card.class} / {card.alignment}</p>
@@ -179,13 +203,30 @@ export default function ArenaPage() {
     );
   };
 
-  if (loading) {
+  if (loading && !dailyLimitReached) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-white/50">
         <Loader2 className="w-8 h-8 animate-spin mb-4" />
         <p className="font-mono text-[10px] tracking-widest uppercase">
           Matchmaking...
         </p>
+      </div>
+    );
+  }
+
+  if (dailyLimitReached) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-center px-6">
+        <h2 className="text-3xl font-bold mb-4 font-sans text-white">Daily Limit Reached</h2>
+        <p className="text-white/50 mb-8 font-mono text-sm leading-relaxed max-w-md">
+          You have judged 3 battles today. The Arena requires a rested mind. Return tomorrow to cast your votes again.
+        </p>
+        <button 
+          onClick={() => window.location.href = '/me'}
+          className="px-8 py-3 bg-white/5 border border-white/10 rounded-full font-mono text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all"
+        >
+          Return to Dashboard
+        </button>
       </div>
     );
   }
@@ -241,50 +282,50 @@ export default function ArenaPage() {
                 </div>
               </div>
 
-              {/* Trait Buttons (Voting Phase) */}
-              <div className="flex flex-col md:flex-row gap-6 w-full max-w-4xl mb-16">
-                <button
-                  onClick={() => handleVote(matchData.cards[0].id, matchData.cards[1].id)}
-                  disabled={hasVoted}
-                  className={`flex-1 py-10 px-8 rounded-3xl border-2 transition-all duration-300 font-sans font-bold text-2xl flex flex-col items-center justify-center gap-2 group ${
-                    hasVoted 
-                      ? votingFor === matchData.cards[0].id 
-                        ? "bg-accent/20 text-accent border-accent scale-105 shadow-[0_0_40px_rgba(94,167,160,0.3)]" 
-                        : "bg-white/5 text-white/30 border-white/5 opacity-50 grayscale"
-                      : "bg-white/5 hover:bg-accent/10 text-white border-white/10 hover:border-accent/50 hover:shadow-[0_0_30px_rgba(94,167,160,0.2)] hover:-translate-y-2"
-                  }`}
-                >
-                  <span className="text-xs font-mono tracking-widest text-white/50 uppercase group-hover:text-accent/80 transition-colors">Candidate Alpha</span>
-                  <span className="capitalize text-3xl md:text-4xl">{STAT_DISPLAY[traitA] || traitA}</span>
-                </button>
-                
-                <div className="flex items-center justify-center md:px-2 py-4">
-                  <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                    <Swords className="w-5 h-5 text-white/20" />
-                  </div>
-                </div>
+              {/* Voting Phase vs Results Phase */}
+              <AnimatePresence mode="wait">
+                {!hasVoted ? (
+                  <motion.div 
+                    key="voting-buttons"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="flex flex-col md:flex-row gap-6 w-full max-w-4xl mb-16"
+                  >
+                    <button
+                      onClick={() => handleVote(matchData.cards[0].id, matchData.cards[1].id)}
+                      className="flex-1 py-10 px-8 rounded-3xl border-2 transition-all duration-300 font-sans font-bold text-2xl flex flex-col items-center justify-center gap-2 group bg-white/5 hover:bg-accent/10 text-white border-white/10 hover:border-accent/50 hover:shadow-[0_0_30px_rgba(94,167,160,0.2)] hover:-translate-y-2"
+                    >
+                      <span className="text-xs font-mono tracking-widest text-white/50 uppercase group-hover:text-accent/80 transition-colors">Candidate Alpha</span>
+                      <span className="capitalize text-3xl md:text-4xl">{STAT_DISPLAY[traitA] || traitA}</span>
+                    </button>
+                    
+                    <div className="flex items-center justify-center md:px-2 py-4">
+                      <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                        <Swords className="w-5 h-5 text-white/20" />
+                      </div>
+                    </div>
 
-                <button
-                  onClick={() => handleVote(matchData.cards[1].id, matchData.cards[0].id)}
-                  disabled={hasVoted}
-                  className={`flex-1 py-10 px-8 rounded-3xl border-2 transition-all duration-300 font-sans font-bold text-2xl flex flex-col items-center justify-center gap-2 group ${
-                    hasVoted 
-                      ? votingFor === matchData.cards[1].id 
-                        ? "bg-accent/20 text-accent border-accent scale-105 shadow-[0_0_40px_rgba(94,167,160,0.3)]" 
-                        : "bg-white/5 text-white/30 border-white/5 opacity-50 grayscale"
-                      : "bg-white/5 hover:bg-accent/10 text-white border-white/10 hover:border-accent/50 hover:shadow-[0_0_30px_rgba(94,167,160,0.2)] hover:-translate-y-2"
-                  }`}
-                >
-                  <span className="text-xs font-mono tracking-widest text-white/50 uppercase group-hover:text-accent/80 transition-colors">Candidate Beta</span>
-                  <span className="capitalize text-3xl md:text-4xl">{STAT_DISPLAY[traitB] || traitB}</span>
-                </button>
-              </div>
-
-              {/* Revealed Cards */}
-              <div className="w-full flex flex-col md:flex-row gap-8 mb-12">
-                {renderCard(matchData.cards[0], hasVoted)}
-                {renderCard(matchData.cards[1], hasVoted)}
-              </div>
+                    <button
+                      onClick={() => handleVote(matchData.cards[1].id, matchData.cards[0].id)}
+                      className="flex-1 py-10 px-8 rounded-3xl border-2 transition-all duration-300 font-sans font-bold text-2xl flex flex-col items-center justify-center gap-2 group bg-white/5 hover:bg-accent/10 text-white border-white/10 hover:border-accent/50 hover:shadow-[0_0_30px_rgba(94,167,160,0.2)] hover:-translate-y-2"
+                    >
+                      <span className="text-xs font-mono tracking-widest text-white/50 uppercase group-hover:text-accent/80 transition-colors">Candidate Beta</span>
+                      <span className="capitalize text-3xl md:text-4xl">{STAT_DISPLAY[traitB] || traitB}</span>
+                    </button>
+                  </motion.div>
+                ) : (
+                  <motion.div 
+                    key="revealed-cards"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="w-full flex flex-col md:flex-row gap-8 mb-12"
+                  >
+                    {renderCard(matchData.cards[0])}
+                    {renderCard(matchData.cards[1])}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Next Match Button */}
               {hasVoted && (

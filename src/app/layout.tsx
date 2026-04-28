@@ -3,6 +3,7 @@ import { Syne, DM_Mono } from "next/font/google";
 import "./globals.css";
 import { PostHogProvider } from "./providers";
 import Navbar from "@/components/Navbar";
+import AuthGuard from "@/components/AuthGuard";
 
 const syne = Syne({
   variable: "--font-syne",
@@ -32,10 +33,12 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <PostHogProvider>
-          <Navbar />
-          <main className="flex-1">
-            {children}
-          </main>
+          <AuthGuard>
+            <Navbar />
+            <main className="flex-1">
+              {children}
+            </main>
+          </AuthGuard>
         </PostHogProvider>
       </body>
     </html>
